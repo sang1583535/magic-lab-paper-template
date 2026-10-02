@@ -1,0 +1,18 @@
+% Sample results table kept in its own file under tables/ and pulled into the
+% evaluation section with \input{tables/main_results}. Keeping tables in a
+% separate folder keeps your section prose readable.
+\begin{table}[t]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        Method & Metric A $\uparrow$ & Metric B $\uparrow$ \\
+        \midrule
+        Baseline A           & 70.0          & 61.2 \\
+        Baseline B           & 74.3          & 68.0 \\
+        \methodname{} (ours) & \textbf{82.5} & \textbf{74.8} \\
+        \bottomrule
+    \end{tabular}
+    \caption{\textbf{Main results.} Bold marks the best result per column.
+    Replace with your own numbers and add standard errors where appropriate.}
+    \label{tab:main-results}
+\end{table}

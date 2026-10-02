@@ -1,4 +1,4 @@
-\documentclass[table]{ai2style/ai2}
+\documentclass[table]{magicstyle/magic}
 \usepackage{amssymb}
 \usepackage{multirow}
 \usepackage{bigdelim}
@@ -70,7 +70,7 @@
 
 
 \usepackage{hyperref}
-\definecolor{linkcolor}{RGB}{0, 0, 128}
+\definecolor{linkcolor}{HTML}{1F5A93}
 \hypersetup{
      colorlinks   = true,
      citecolor    = linkcolor,
@@ -115,65 +115,23 @@
 
 
 \newcommand{\missing}{\color{red}{xxx}\xspace}
-\newcommand{\family}{\href{https://www.youtube.com/watch?v=IQuc7wfO16Q}{family\xspace}}
 
-\newcommand{\arm}{\textsc{ARM}\xspace}
-\newcommand{\arms}{\textsc{ARM}s\xspace}
-\newcommand{\molmoact}{\textsc{MolmoAct}\xspace}
-\newcommand{\molmoactt}{\textsc{MolmoAct2}\xspace}
-\newcommand{\molmoacto}{\textsc{MolmoAct-7B-O}\xspace}
-\newcommand{\molmoactd}{\textsc{MolmoAct-7B-D}\xspace}
-\newcommand{\molmoactfast}{\textsc{MolmoAct2-FAST Tokenizer}\xspace}
+% ---------------------------------------------------------------------------
+% Project-specific macros. Rename these for your own paper.
+% (The original MolmoAct2 paper macros are preserved in the git history.)
+% ---------------------------------------------------------------------------
+\newcommand{\methodname}{\textsc{MethodName}\xspace}
+\newcommand{\datasetname}{\textsc{DatasetName}\xspace}
 
-\newcommand{\molmoactdpre}{\textsc{MolmoAct-7B-D-Pretrain}\xspace}
-\newcommand{\molmoactdata}{\textsc{MolmoAct Dataset}\xspace}
-\newcommand{\molmoer}{\textsc{Molmo2-ER}\xspace}
-\newcommand{\molmot}{\textsc{Molmo2}\xspace}
-\newcommand{\molmoacttpre}{\textsc{MolmoAct2-Pretrain}\xspace}
-\newcommand{\molmoacttpos}{\textsc{MolmoAct2-Post}\xspace}
-\newcommand{\molmoacttlib}{\textsc{MolmoAct2-LIBERO}\xspace}
-
-
-\newcommand{\molmothink}{\textsc{MolmoAct2-Think}\xspace}
-\newcommand{\molmoacttdroid}{\textsc{MolmoAct2-DROID}\xspace}
-\newcommand{\molmoacttso}{\textsc{MolmoAct2-SO100/101}\xspace}
-\newcommand{\molmoacttyam}{\textsc{MolmoAct2-BimanualYAM}\xspace}
-\newcommand{\molmoacttdroiddata}{\textsc{MolmoAct2-DROID Dataset}\xspace}
-\newcommand{\molmoacttsodata}{\textsc{MolmoAct2-SO100/101 Dataset}\xspace}
-\newcommand{\molmoacttyamdata}{\textsc{MolmoAct2-BimanualYAM Dataset}\xspace}
-\newcommand{\molmoacttlibero}{\textsc{MolmoAct2-LIBERO}\xspace}
-\newcommand{\molmothinklibero}{\textsc{MolmoAct2-Think-LIBERO}\xspace}
-
-
-
-\newcommand{\groot}{\textsc{GR00T N1}\xspace}
-\newcommand{\pizero}{$\pi_0$\xspace}
-\newcommand{\pizerofast}{$\pi_0$-FAST\xspace}
-
-\newcommand{\simpler}{SimplerEnv\xspace}
-\newcommand{\libero}{LIBERO\xspace}
-
-
-\newcommand{\diveStability}{Pretraining Stability}
-\newcommand{\diveAnnealing}{Mid-training Recipe}
-\newcommand{\diveInfra}{Infrastructure as a Research Catalyst}
-\newcommand{\divePost}{Post-training Pipeline}
-\newcommand{\ccell}[1]{#1}  %
-
-\newcommand{\ranjay}[1]{{\color{red} $[$#1$]^R_K$}}
-\newcommand{\dieter}[1]{{\color{violet} [dieter]: #1}}
-\newcommand{\hqfang}[1]{{\color{purple} [Haoquan]: #1}}
-\newcommand{\jr}[1]{{\color{cyan} [Jason]: #1}}
-\newcommand{\jrc}[1]{{\color{red} #1}}
-
-\newcommand{\jc}[1]{{\color{orange} [Jaemin]: #1}}
+% Inline editing / review note, e.g. \todonote{double-check this number}
+\newcommand{\todonote}[1]{{\color{orange} [note: #1]}}
 
 
 \newcommand{\huggingface}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/hf.pdf}}\xspace}
 \newcommand{\emailLogo}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/email.pdf}}\xspace}
 \newcommand{\hfdataset}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/db.pdf}}\xspace}
 \newcommand{\github}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/github.pdf}}\xspace}
-\newcommand{\aitoo}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/ai2.pdf}}\xspace}
+\newcommand{\aitoo}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/magic-logo.png}}\xspace}
 \newcommand{\wandb}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/wandb-logo.pdf}}\xspace}
 
 
@@ -193,63 +151,29 @@
 \aboverulesep=0pt
 \belowrulesep=0pt
 
-\newcommand{\aitwo}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/ai2_logo.png}}\xspace}
+\newcommand{\aitwo}{\raisebox{-1.5pt}{\includegraphics[height=1.05em]{logos/magic-logo.png}}\xspace}
 
 
 
-\title{MolmoAct2\\{\fontsize{18pt}{12pt}\selectfont Action Reasoning Models for Real-World Deployment}}
+\title{Paper Title\\{\fontsize{18pt}{12pt}\selectfont An Optional Descriptive Subtitle}}
 
 
 
 \newcommand{\core}{\textsuperscript{\textcolor{ai2pink}{\ding{170}}}}
-\authorOne[1,2*]{Haoquan Fang\core}
-\authorOne[1,2,3*]{Jiafei Duan\core}
+\authorOne[1*]{First Author\core}
+\authorOne[1*]{Second Author\core}
 
-\authorTwo[1,2]{Donovan Clay\core}
-\authorTwo[1,4]{Sam Wang\core}
-\authorTwo[2]{Shuo Liu\core}
-\authorTwo[1,2]{Weikai Huang\core}
-\authorTwo[1,2]{Xiang Fan\core}
-\authorTwo[2]{Wei-Chuan Tsai\core}
-\authorTwo[1,2]{Shirui Chen\core}
-\authorTwo[1,2]{Yi Ru Wang\core}
-\authorTwo[2]{Shanli Xing\core}
+\authorTwo[1]{Third Author}
+\authorTwo[1]{Fourth Author}
+\authorTwo[2]{External Collaborator}
 
+\authorThree[1]{Jiafei Duan}
 
-\authorThree[1,2,5]{Jaemin Cho}
-\authorThree[1]{Jae Sung Park}
-\authorThree[1,2]{Ainaz Eftekhar}
-\authorThree[1]{Peter Sushko}
-\authorThree[1]{Karen Farley}
-\authorThree[2]{Angad Wadhwa}
-\authorThree[6]{Cole Harrison}
-\authorThree[1]{Winson Han}
-\authorThree[2]{Ying-Chun Lee}
-\authorThree[1]{Eli VanderBilt}
-\authorThree[1]{Rose Hendrix}
-\authorThree[7]{Suveen Ellawela}
-\authorThree[7]{Lucas Ngoo}
-
-
-\authorFour[8]{Joyce Chai}
-\authorFour[1,2,9]{Zhongzheng Ren\core}
-\authorFour[1,2]{Ali Farhadi\core}
-\authorFour[1,2]{Dieter Fox\core}
-\authorFour[1,2]{Ranjay Krishna\core}
-
-
-\affiliation[1]{Allen Institute for AI}
-\affiliation[2]{University of Washington}
-\affiliation[3]{National University of Singapore}
-\affiliation[4]{University of Pennsylvania}
-\affiliation[5]{Johns Hopkins University}
-\affiliation[6]{Amazon}
-\affiliation[7]{Cortex AI}
-\affiliation[8]{University of Michigan}
-\affiliation[9]{University of North Carolina at Chapel Hill}
+\affiliation[1]{MAGIC Lab, National University of Singapore}
+\affiliation[2]{Collaborating Institution}
 
 \contribution[]{
-* denotes equal contribution in no particular order. $\textcolor{ai2pink}{\varheartsuit}$ marks core contributors. See full author contributions \hyperref[sec:contrib]{here}.
+* denotes equal contribution. $\textcolor{ai2pink}{\varheartsuit}$ marks core contributors. Correspondence to \email{duanj1@nus.edu.sg}.
 }
 
 \abstract{
@@ -257,22 +181,21 @@
 }
 
 
-\metadata[\quad\huggingface MolmoAct2:]{
-\href{https://huggingface.co/collections/allenai/molmoact2-finetuned-models}{\texttt{MolmoAct2-Finetune}} \quad \href{https://huggingface.co/allenai/MolmoAct2}{\texttt{MolmoAct2}} \quad \href{https://huggingface.co/allenai/MolmoAct2-Think}{\texttt{MolmoAct2-Think}} \quad \href{https://huggingface.co/allenai/MolmoAct2-Pretrain}{\texttt{MolmoAct2-Pretrain}} \quad \href{https://huggingface.co/allenai/Molmo2-ER-4B}{\texttt{Molmo2-ER}}
+\metadata[\quad\github Code:]{
+    \href{https://github.com/MAGICLAB-NUS}{\texttt{github.com/MAGICLAB-NUS}}
 }
 
-
-\metadata[\vspace{.5em}\quad\hfdataset MolmoAct2 Data:]{
-\href{https://huggingface.co/collections/allenai/molmoact2-bimanualyam-dataset}{\texttt{MolmoAct2-BimanualYAM}} \quad
-\href{https://huggingface.co/datasets/allenai/MolmoAct2-SO100_101-Dataset}{\texttt{MolmoAct2-SO100/101}} \quad \href{https://huggingface.co/datasets/allenai/MolmoAct2-DROID-Dataset}{\texttt{MolmoAct2-DROID}} \quad \href{https://huggingface.co/collections/allenai/molmo2-er-datasets}{\texttt{Molmo2-ER}} 
+\metadata[\vspace{.5em}\quad\huggingface Models:]{
+\href{https://huggingface.co/}{\texttt{your-org/your-model}}
 }
 
-
-\metadata[\vspace{.5em}\quad\github Code:]{
-    \href{https://github.com/allenai/molmoact2}{\texttt{allenai/molmoact2}}
+\metadata[\vspace{.5em}\quad\hfdataset Data:]{
+\href{https://huggingface.co/}{\texttt{your-org/your-dataset}}
 }
 
-\metadata[\vspace{.5em}\quad\aitoo Blog:]{\href{https://allenai.org/blog/molmoact2}{\texttt{allenai.org/blog/molmoact2}}}
+\metadata[\vspace{.5em}\quad\aitoo Project page:]{\href{https://magiclab-nus.github.io/}{\texttt{magiclab-nus.github.io}}}
+
+\correspondence{\email{duanj1@nus.edu.sg}}
 
 
 
@@ -286,31 +209,22 @@
 
 
 %%%%%%%%% MAIN PAPER %%%%%%%%%
-
 \input{sections/1-introduction}
-\input{sections/2-molmo2er}
-\input{sections/3-data}
-\input{sections/4-molmoact2}
-\input{sections/5-think}
-\input{sections/6-evaluation}
-\input{sections/7-related_work}
-\input{sections/8-conclusion}
+\input{sections/2-related_work}
+\input{sections/3-methodology}
+\input{sections/4-evaluation}
+\input{sections/5-conclusion}
 
-%%%%% ACKKNOWLEDGEMENT %%%%%
+%%%%% ACKNOWLEDGMENT %%%%%
+\input{sections/6-acknowledgement}
+
+%%%%%%%%% REFERENCES %%%%%%%%%
 \clearpage
-
-% 
-\input{sections/9-acknowledgment}
-
-\clearpage
-
-%%%%%%%%% BIB %%%%%%%%%
 \bibliographystyle{abbrvnat}
 \bibliography{reference}
 
-
 %%%%%%%% APPENDIX %%%%%%%%%
 \clearpage
-\include{sections/n-appendix}
+\input{sections/appendix}
 
 \end{document}
