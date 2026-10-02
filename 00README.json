@@ -6,27 +6,27 @@
       },
       {
          "usage" : "ignore",
-         "filename" : "magicstyle/defns.tex"
+         "filename" : "ai2style/defns.tex"
       },
       {
          "usage" : "ignore",
-         "filename" : "magicstyle/manrope.sty"
+         "filename" : "ai2style/manrope.sty"
       },
       {
          "usage" : "ignore",
-         "filename" : "magicstyle/manrope/Manrope-Bold.ttf"
+         "filename" : "ai2style/manrope/Manrope-Bold.ttf"
       },
       {
          "usage" : "ignore",
-         "filename" : "magicstyle/manrope/Manrope-Regular.ttf"
+         "filename" : "ai2style/manrope/Manrope-Regular.ttf"
       },
       {
          "usage" : "ignore",
-         "filename" : "magicstyle/plainnat.bst"
+         "filename" : "ai2style/plainnat.bst"
       },
       {
          "usage" : "ignore",
-         "filename" : "magicstyle/template_content.tex"
+         "filename" : "ai2style/template_content.tex"
       },
       {
          "usage" : "ignore",

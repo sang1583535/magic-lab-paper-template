@@ -1,13 +1,13 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% A style for MAGIC Lab (NUS) pre-prints
-% MAGIC Lab, National University of Singapore -- https://magiclab-nus.github.io/
-% Version: 1.0
+% A style for AI2 pre-prints
+% Author: jacobm@allenai.org
+% Version: 1.1
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Class declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{magicstyle/magic}
+\ProvidesClass{ai2style/ai2}
 \LoadClassWithOptions{article}
 
 % Layout %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,23 +42,12 @@
 
 \RequirePackageWithOptions{xcolor}
 \RequirePackage[most]{tcolorbox}
-% MAGIC Lab brand palette (from magiclab-nus.github.io)
-\definecolor{magicnavy}{HTML}{153455}
-\definecolor{magicnavydeep}{HTML}{0D243D}
-\definecolor{magicblue}{HTML}{2B5F91}
-\definecolor{magiclink}{HTML}{1F5A93}
-\definecolor{magicmist}{HTML}{EEF3F8}
-\definecolor{magicline}{HTML}{D8E1EC}
-\definecolor{magictext}{HTML}{233143}
-% Legacy color names kept (mapped to MAGIC palette) so existing table/section
-% files continue to compile without edits.
-\definecolor{ai2accent}{HTML}{1F5A93}
-\definecolor{ai2foreground}{HTML}{233143}
-\definecolor{ai2background}{HTML}{EEF3F8}
-\definecolor{ai2foregroundDark}{HTML}{233143}
-\definecolor{ai2pink}{HTML}{153455}
-\definecolor{ai2lightpink}{HTML}{DCE8F3}
-\definecolor{ai2offwhite}{HTML}{F3F6FB}
+\definecolor{ai2accent}{HTML}{407579}
+% \definecolor{ai2accent}{HTML}{ff0000}
+\definecolor{ai2foreground}{HTML}{1C2B33}
+\definecolor{ai2background}{HTML}{faf2e9}
+\definecolor{ai2foregroundDark}{HTML}{0A2B35}
+\definecolor{ai2pink}{HTML}{F0529C}
 
 % References %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -136,7 +125,7 @@
 % \fancyhf{}
 % % \renewcommand{\headrulewidth}{0pt}
 % \fancyhead[L]{
-%     \includegraphics[width=50pt]{logos/magic-logo.png}
+%     \includegraphics[width=50pt]{ai2style/assets/Ai2_logo_pink_RGB.png}
 % }
 % \fancyhead[R]{}
 % \fancyhead[C]{}
@@ -153,7 +142,7 @@
 %   \AtPageUpperLeft{%
 %     \hspace{10pt}
 %     \raisebox{-\height+\dimexpr -15pt\relax}{
-%     \includegraphics[width=0.1\textwidth]{logos/magic-logo.png}}%
+%     \includegraphics[width=0.1\textwidth]{ai2style/assets/Ai2_logo_pink_RGB.png}}%
 %   }
 % }
 
@@ -173,7 +162,7 @@
 \else
     \RequirePackage[T1]{fontenc}
     \usepackage[T1]{fontenc}
-    \usepackage{magicstyle/manrope}
+    \usepackage{ai2style/manrope}
     \renewcommand{\sfdefault}{manrope}
 \fi
 
@@ -306,13 +295,21 @@
   \tcbset{before skip=0pt}
   \tcbset{grow to left by=1.5pt}
   \tcbset{grow to right by=1.5pt}
-
+  % \tcbset{overlay={\node[
+  %   anchor=north east,
+  %   at= (frame.north east),
+  %   xshift=0cm,
+  %   yshift=1.33cm] {\includegraphics[width=2cm]{ai2style/assets/Ai2_logo_pink_RGB.png}};}}
+  \tcbset{overlay={\node[
+    anchor=north east,
+    at= (frame.north east),
+    xshift=-0.5cm,
+    yshift=-0.45cm] {\includegraphics[width=1.57cm]{ai2style/assets/Ai2_logo_pink_RGB.png}};}}
+  
   \setlength{\parskip}{0cm}
+  % \raggedright
   \nohyphens
   %
-  % MAGIC Lab logo banner at the top of the title block
-  {\noindent\includegraphics[width=5.2cm]{logos/magic-logo.png}\par}
-  \vskip 0.45cm
   {
     \setstretch{1.618}
     \titlelist\par

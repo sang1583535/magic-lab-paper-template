@@ -1,0 +1,72 @@
+Key,Langauge Instruction,Scene,Object
+put\_knife\_sink,put the knife in the sink,Kitchen,"Small knife, Big KNife"
+put\_fork\_sink,put the fork in the sink,Kitchen,Fork (2 types)
+put\_spoon\_sink,put the spoon in the sink,Kitchen,Spoon (2 types)
+put\_bowl\_sink,put the bowl in the sink,Kitchen,Bowl (2 types)
+pour\_water,Pour me some water,Kitchen,"Big Pitcher, Small Pitcher"
+clean\_spill,Clean the spill,Kitchen,Sponge
+wipe\_counter,Wipe the counter,Kitchen,Towels
+put\_plate\_in\_dishwasher,Put the plate in the dishwasher,Kitchen,Plate
+put\_fork\_in\_dishwasher,put the fork in the dishwasher,Kitchen,Fork
+put\_spoon\_in\_dishwasher,put the spoon in the dishwasher,Kitchen,Spoon
+cover\_pot\_lid,Cover the lid of the pot,Kitchen,"Pots(w/ handle, w/o handle)"
+uncover\_lid\_of\_pot,Uncover the lid of the pot,Kitchen,"Pots(w/ handle, w/o handle)"
+cover\_lid\_food\_container,Cover the lid of the food container,Kitchen,"Large Container, Small Container"
+uncover\_food\_container,Uncover the lid of the food container,Kitchen,Large Container
+uncover\_container\_lid,Uncover the lid of the food container,Kitchen,Small Container
+put tongs in the holder,Put the tongs back in the holder,Kitchen,Tongs
+press\_toaster,Turn on the toaster,Kitchen,Toaster
+close\_the\_microwave,Close the microwave,Kitchen,Microwave
+put\_spoon\_into\_plate,Put the spoon on the plate,Kitchen,Spoon
+put\_fork\_into\_plate,Put the fork on the plate,Kitchen,Fork
+put\_apple\_into\_container,Put apple in the food container,Kitchen,Apple(red and green)
+put\_cereal\_into\_container,Put the cereal in the food container,Kitchen,Cereal(2 types)
+put\_protein\_bar\_into\_container,Put the protein bar in the food container,Kitchen,Protein Bar(2-3 types)
+put\_chips\_into\_container,Put the chip bag in the food container,Kitchen,chip bag(2-3 types)
+turn\_off\_light\_kitchen,Turn off the light,Kitchen,Light switch
+put\_fruits\_in\_basket,put fruits in the basket,Kitchen,"Apple, Lemon, Plum, Mango, Pear"
+take\_fruits,take fruts out of the basket,Kitchen,"Apple, Lemon, Plum, Mango, Pear"
+close\_drawer,close the drawer,Kitchen,Drawer
+put\_item\_drawer,put item into drawer,Kitchen,"Fork, Mug, Apple, Scissor"
+turn\_on\_faucet,Turn on the faucet,Kitchen,Faucet
+put\_plate\_sink,put the plate in the sink,Kitchen,"Plate, Sink"
+put\_mug\_sink,put the mug in the sink,Kitchen,"Mug, Sink"
+kettle\_off\_stove,Take kettle off the stove,Kitchen,"Kettle, Stove"
+kettle\_on\_stove,Place kettle onto stove,Kitchen,"Kettle, Stove"
+pour\_the\_cereal\_in\_the\_box,Pour the cereal in a lunch box,Kitchen,"Cereal, Lunch box"
+close\_oven,Close the oven,Kitchen,Oven
+open\_the\_oven,Open the oven,Kitchen,Oven
+turn\_on\_stove,Turn on the Stove,Kitchen,Stove
+turn\_off\_stove,Turn off the Stove,Kitchen,Stove
+unload\_the\_dishwasher\_mug,Unload the mug from the dish wisher,Kitchen,Mugs
+put\_snacks\_in\_container,Put the Snacks in the Containers,Kitchen,Snacks
+hang\_the\_cap,hang cap,Bedroom,Cap
+wipe\_sink\_bathroom,Wipe the sink,Bathroom,towels(gray and brown towels)
+press\_hand\_sanitizer,Press sanitizer,Bathroom,sanitizer(high and low)
+clean\_toilet,Clean the toilet,Bathroom,Toliet brush
+turn\_on\_hot\_water,Turn on hot water,Bathroom,Faucet
+turn\_on\_cold\_water,Turn on the cold water,Bathroom,Faucet
+turn\_off\_hot\_water,Turn off the hot water,Bathroom,Faucet
+turn\_off\_cold\_water,Turn off the cold water,Bathroom,Faucet
+throw\_tissue\_bathroom\_left,Throw the tissue,Bathroom,Tissue 
+throw\_tissue\_bathroom\_right,Throw the tissue,Bathroom,Tissue
+flush\_toilet,Flush the toliet,Bathroom,Toliet brush
+put\_markers\_hack\_holder,Put the markers back in the holder,Bedroom,Pen holder 1(shape)
+put\_markers\_hack\_holder,Put the markers back in the holder,Bedroom,Pen holder 2(shape)
+hang\_headphone,hand the headphone,Bedroom,Headphone
+put\_clothes\_laundry\_bag,Put my clothes in the laundry bag,Bedroom,"Clothes(pans, T-shirt)"
+throw\_bottle\_bedroom,Throw the water bottle in the trash bin,Bedroom,Bottle
+throw\_can\_bedroom,Throw the can in the trash bin,Bedroom,Can(2 types)
+close\_laptop\_lid\_bedroom,Close the laptop lid,Bedroom,Laptop
+throw\_can\_livingroom,Throw the can in the trash bin,Livingroom,Can(2 types)
+throw\_plastic\_bottle\_livingroom,Throw the plastic bottle in the trash bin,Livingroom,Bottle
+throw\_chip\_bag\_livingroom,Throw the chip bag in the trash bin ,Livingroom,Chip bag(2-3 types)
+throw\_tissue\_livingroom,Throw the tissue in the trash bin,Livingroom,Tissue
+put\_apple\_tray\_livingroom,Put the apple in the tray ,Livingroom,Apple
+put\_tangerine\_livingroom,Put the tangerine in the tray,Livingroom,Tangerine
+put\_banana\_tray\_livingroom,Put the banana in the tray,Livingroom,Banana
+put\_game\_pad\_basket\_livingroom,Put the gamepad back in the basket,Livingroom,"Gamepad, Baskets(2 types)"
+put\_toy\_car\_in\_basket\_livingroom,Put the toys in the basket,Livingroom,"Toy car, Baskets(2 types)"
+put\_stuffed\_toy\_basket\_livingroom,Put the stuffed toys in the basket,Livingroom,"Fluffy toy, Baskets(2 types)"
+arrange\_pillow,Arrange pillows,Livingroom,Pillow
+shelf\_book,Shelf books,Livingroom,Books

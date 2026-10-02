@@ -1,0 +1,46 @@
+% ---------- MODEL ARCHITECTURE ---------------------------------------------
+\begin{table}[t]
+\newcommand\modelvalue[1]{\cellcolor{olive!5} #1}
+\newcommand\navalue{--}
+\centering
+\footnotesize
+\setlength\tabcolsep{6pt}
+\renewcommand\arraystretch{1.1}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Hyperparameter} &
+\textbf{\makecell{Image\\Encoder}} &
+\textbf{\makecell{V/L\\Connector}} &
+\textbf{LLM} &
+\textbf{\makecell{Action\\Expert}} \\
+\midrule
+Params & \modelvalue{380M} & \modelvalue{57M} & \modelvalue{4.0B} & \modelvalue{621M} \\
+Dim & \modelvalue{1152} & \modelvalue{1152} & \modelvalue{2560} & \modelvalue{768} \\
+MLP Dim & \modelvalue{4304} & \modelvalue{9728} & \modelvalue{9728} & \modelvalue{3072} \\
+Act. & \modelvalue{GELU} & \modelvalue{SwiGLU} & \modelvalue{SwiGLU} & \modelvalue{SwiGLU} \\
+Heads & \modelvalue{16} & \modelvalue{16} & \modelvalue{32} & \modelvalue{8} \\
+KV Heads & \modelvalue{16} & \navalue & \modelvalue{8} & \navalue \\
+Layers & \modelvalue{27} & \navalue & \modelvalue{36} & \modelvalue{36} \\
+Dropout & \modelvalue{0.0} & \modelvalue{0.0} & \modelvalue{0.1} & \modelvalue{0.0} \\
+\midrule
+Image Size & \modelvalue{\(384{\times}384\)} & \navalue & \navalue & \navalue \\
+Patch Size & \modelvalue{14} & \navalue & \navalue & \navalue \\
+Image Pool Size & \navalue & \modelvalue{\(2{\times}2\)} & \navalue & \navalue \\
+Video Pool Size & \navalue & \modelvalue{\(3{\times}3\)} & \navalue & \navalue \\
+Pool Dim & \navalue & \modelvalue{1152} & \navalue & \navalue \\
+Pool Heads & \navalue & \modelvalue{16} & \navalue & \navalue \\
+Embed & \navalue & \navalue & \modelvalue{151936} & \navalue \\
+Theta & \navalue & \navalue & \modelvalue{1M} & \navalue \\
+\midrule
+Max Horizon & \navalue & \navalue & \navalue & \modelvalue{30} \\
+Max Action Dim & \navalue & \navalue & \navalue & \modelvalue{32} \\
+Time Embed Dim & \navalue & \navalue & \navalue & \modelvalue{256} \\
+Conditioning & \navalue & \navalue & \navalue & \modelvalue{Per-layer KV} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{\molmoactt architecture hyperparameters.} The image encoder,
+connector, and LLM columns follow the 4B \molmoer backbone used by
+\molmoactt. The action-expert column describes the MolmoAct2 continuous
+flow-matching module used for continuous action prediction.}
+\label{tab:hyperparams_model}
+\end{table}
