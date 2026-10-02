@@ -1,0 +1,43 @@
+\begin{table*}[t]
+  \centering
+  \small
+  \caption{\textbf{\simpler evaluation across different policies on Google Robot tasks.} 
+  The zero-shot and fine-tuning results denote performance of OXE dataset~\citep{o2024open} pre-trained models and RT-1 dataset~\citep{brohan2022rt} fine-tuned models, respectively.}
+  \label{tab:simplerenvgooglerobot}
+  \resizebox{\textwidth}{!}{
+  \begin{tabular}{l|cccc|c|cccc|c}
+    \toprule
+    \multirow{2}{*}{Model} &
+    \multicolumn{4}{c|}{\textbf{Visual Matching}} &
+    \multirow{2}{*}{Avg} &
+    \multicolumn{4}{c|}{\textbf{Variant Aggregation}} &
+    \multirow{2}{*}{Avg} \\
+    \cline{2-5} \cline{7-10}
+    & Pick Coke Can & Move Near & Open/Close Drawer & & & Pick Coke Can & Move Near & Open/Close Drawer & \\
+    \midrule
+    % RT-1 (Begin) & 2.7\% & 5.0\% & 13.9\% & & 6.8\% & 2.2\% & 4.0\% & 6.9\% & & 4.2\% \\
+    % RT-1 (15\%) & 71.0\% & 35.4\% & 56.5\% & & 60.2\% & 81.3\% & 44.6\% & 26.7\% & & 56.2\% \\
+    % RT-1 (Converged) & 85.7\% & 44.2\% & 73.0\% & & 74.6\% & 89.8\% & 50.0\% & 32.3\% & & 63.3\% \\
+    % \midrule
+    HPT \citep{wang2024scaling} & 56.0\% & 60.0\% & 24.0\% & & 46.0\% & \multicolumn{4}{c|}{---} & --- \\
+    TraceVLA \citep{zheng2024tracevla} & 28.0\% & 53.7\% & 57.0\% & & 42.0\% & 60.0\% & 56.4\% & 31.0\% & & 45.0\% \\
+    RT-1-X \citep{brohan2022rt} & 56.7\% & 31.7\% & 59.7\% & & 53.4\% & 49.0\% & 32.3\% & 29.4\% & & 39.6\% \\
+    RT-2-X \citep{zitkovich2023rt} & 78.7\% & 77.9\% & 25.0\% & & 60.7\% & 82.3\% & 79.2\% & 35.3\% & & 64.3\% \\
+    Octo-Base \citep{team2024octo} & 17.0\% & 4.2\% & 22.7\% & & 16.8\% & 0.6\% & 3.1\% & 1.1\% & & 1.1\% \\
+    OpenVLA \citep{kim2024openvla} & 16.3\% & 46.2\% & 35.6\% & & 27.7\% & 54.5\% & 47.7\% & 17.7\% & & 39.8\% \\
+    RoboVLM (zero-shot) \citep{liu2025towards} & 72.7\% & 66.3\% & 26.8\% & & 56.3\% & 68.3\% & 56.0\% & 8.5\% & & 46.3\% \\
+    RoboVLM (fine-tuned) & 77.3\% & 61.7\% & 43.5\% & & 63.4\% & 75.6\% & 60.0\% & 10.6\% & & 51.3\% \\
+    Emma-X \citep{sun2024emma} & 2.3\% & 3.3\% & 18.3\% & & 8.0\% & 5.3\% & 7.3\% & 20.5\% & & 11.0\% \\
+    Magma \citep{yang2025magma} & 56.0\% & 65.4\% & 83.7\% & & 68.4\% & 53.4\% & 65.7\% & 68.8\% & & 62.6\% \\
+    \pizero (fine-tuned) \citep{black2410pi0} & 72.7\% & 65.3\% & 38.3\% & & 58.7\% & 75.2\% & 63.7\% & 25.6\% & & 54.8\% \\
+    \pizerofast (fine-tuned) & 75.3\% & 67.5\% & 42.9\% & & 61.9\% & 77.6\% & 68.2\% & 31.3\% & & 59.0\% \\
+    \groot (fine-tuned) \citep{nvidia2025gr00tn1openfoundation} & 0.7\% & 1.9\% & 2.9\% & & 1.8\% & \multicolumn{4}{c|}{---} & --- \\
+    SpatialVLA \citep{qu2025spatialvla}  & 81.0\% & 69.6\% & 59.3\% & & 70.0\% & 89.5\% & 71.7\% & 36.2\% & & 65.8\% \\
+    \rowcolor[HTML]{EFEFEF} \molmoact (zero-shot) & 71.3\% & 73.8\% & 66.5\% & & 70.5\% & 57.8\% & 43.8\% & 76.7\% & & 59.3\% \\
+    \rowcolor[HTML]{EFEFEF} \molmoact (fine-tuned) & 77.7\% & 77.1\% & 60.0\% & & \textbf{71.6\%} & 76.1\% & 61.3\% & 78.8\% & & \textbf{72.1\%} \\
+    \bottomrule
+
+
+  \end{tabular}
+  }
+\end{table*}

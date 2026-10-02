@@ -1,0 +1,51 @@
+\subsection{Pre-training}
+\label{sec:pretraining}
+
+\molmoacttpre adapts the \molmoer vision-language backbone into a discrete autoregressive robot policy while keeping the Molmo2 token interface intact. Images and video frames are still encoded by a ViT, pooled and projected by the vision-language connector, and passed to the LLM together with text. Robot examples extend this sequence with two additional token streams: state tokens that describe the current robot configuration, and action tokens that describe the future one-second motion.
+
+This subsection focuses on the two ingredients needed to make that formulation practical. First, we describe \molmoactfast, which converts continuous, embodiment-specific robot trajectories into compact discrete action tokens. Second, we describe the pre-training recipe that lets these robot sequences be mixed with standard multimodal data: single-crop visual inputs, a small number of sampled video frames, setup/control and action-output markers, state tokenization, and packed training sequences. Together, these choices preserve a single next-token prediction objective across text, vision-language, state, and action targets, without introducing a separate continuous action head at this stage.
+
+\subsubsection{\molmoactfast}
+\label{sec:openfast}
+
+Robot actions are continuous, embodiment-specific, and often produced at different control rates, so they cannot be inserted into a language-model pre-training stream directly. We therefore train \molmoactfast, an open-weight and open-data action tokenizer following FAST~\citep{pertsch2025fast}. The goal is not to introduce a different tokenization principle, but to make this component fully inspectable and reproducible: existing FAST weights are useful, but their training data mixture is not fully specified. \molmoactfast fills this transparency gap by releasing both the tokenizer weights and the action mixture used to train it. It maps a one-second action trajectory into a compact sequence of discrete tokens by representing the trajectory with a frequency-domain transform, quantizing the resulting coefficients, and applying byte-pair encoding to produce tokens from a 2048-token action vocabulary.
+
+Unlike the prior FAST tokenizer, whose released weights are not paired with a fully specified training distribution, \molmoactfast is trained from a transparent action mixture. We subsample one million action sequences across five embodiments, balancing the main \molmoactt deployment platforms with smaller sources that broaden the control vocabulary (\autoref{tab:fast-data}). This gives \molmoactfast coverage over bimanual YAM, SO-100/101, DROID Franka, BC-Z \citep{jang2022bc}, BridgeData V2 \citep{walke2023bridgedata}, RT-1 \citep{brohan2022rt}, and \molmoactdata trajectories, including both absolute joint control and delta end-effector control.
+
+Before fitting the tokenizer, we put all raw robot telemetry into a common action format. Each training sequence corresponds to one second of robot motion, so the number of actions in a chunk is set by the control frequency of the source dataset. Each action in the chunk is padded to 32 dimensions, so embodiments with different action dimensionalities share the same tokenizer input space. Continuous dimensions are normalized with 1--99 percentile statistics, which limits the effect of outliers while preserving the useful dynamic range of each control dimension. Gripper commands are handled separately from this continuous normalization, since they are typically binary or narrow-range open/close signals. This standardized representation allows the same tokenizer to cover both joint-space and end-effector control across multiple robot platforms.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.05}
+\caption{\textbf{Embodiment mixture for \molmoactfast training.} The tokenizer is trained on one million subsampled action sequences spanning the main robot embodiments used by \molmoactt, plus smaller sources that broaden control-mode coverage.}
+\label{tab:fast-data}
+\begin{tabular}{lcll}
+% \toprule
+\textbf{Dataset} & \textbf{Mix} & \textbf{Robot} & \textbf{Action representation} \\
+\midrule
+\molmoacttyamdata & 30\% & YAM & Absolute joint \\
+\molmoacttsodata & 30\% & SO-100/101 & Absolute joint \\
+\molmoacttdroiddata & 30\% & Franka & Absolute joint \\
+Fractal~\citep{brohan2022rt} & 3.33\% & Google Robot & Delta end-effector \\
+BC-Z~\citep{jang2022bc} & 3.33\% & Google Robot & Delta end-effector \\
+Bridge~\citep{walke2023bridgedata} & 3.33\% & WidowX & Delta end-effector \\
+% \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Pre-training recipe}
+\label{sec:pretraining-recipe}
+
+\paragraph{Model.}
+We initialize from the \molmoer checkpoint and keep the Molmo2 vision-language architecture~\citep{clark2026molmo2openweightsdata}. Visual observations are encoded by the SigLIP2 ViT~\citep{tschannen2025siglip}, converted into language-model tokens by the connector, and passed to the LLM together with the language instruction and robot-specific text. The connector uses the same Molmo2 design: features from the third-to-last and ninth-from-last ViT layers are pooled into compact image or video-frame tokens and projected into the LLM embedding space. Full backbone and added-token details are given in \autoref{supp:model-backbone}, with architecture hyperparameters in \autoref{tab:hyperparams_model}.
+
+\paragraph{Data.}
+The training mixture combines multimodal examples with robot trajectories so that the model retains vision-language capability while learning to predict actions; we describe the data sources and curation in Sec.~\ref{sec:data}. We allocate 10\% of sampling to multimodal data and 90\% to robot trajectories. Within the robot portion, YAM, SO-100/101, and DROID each receive 30\% of the robot sampling weight; the remaining 10\% is split across smaller BC-Z, BridgeData V2, RT-1, and \molmoactdata sources. For all visual inputs in this stage, we use a single resized crop rather than high-resolution tiled crops. For videos, we sample at most 8 frames at up to 2 FPS, and we skip examples that exceed the sequence budget, which primarily removes unusually long text examples and videos with long captions. We also apply the image augmentation described in \autoref{supp:training} during pre-training, combining light geometric perturbations with color jitter and occasional blur. For multi-camera robot episodes, we randomize the input camera order at the episode level to prevent the model from relying on a fixed camera slot. Each robot example also includes setup and control strings using the same special-token wrappers used during training, e.g., \texttt{\detokenize{<setup_start>bimanual yam robotic arms in molmoact2<setup_end>}}, and \texttt{\detokenize{<control_start>absolute joint pose<control_end>}} or \texttt{\detokenize{<control_start>delta end-effector pose<control_end>}}; the corresponding chat template and output trigger formatting are detailed in \autoref{supp:training}.
+
+\paragraph{Action and state representation.}
+This stage is deliberately limited to discrete autoregressive supervision: the model predicts action tokens, but does not yet train the continuous action expert used in post-training. Each robot target is represented as a one-second action chunk, so the number of raw actions in the chunk follows the control frequency of the source dataset. Before tokenization, continuous action and state dimensions are normalized with 1--99 percentile statistics; gripper commands are treated separately from this percentile scaling when they are represented as binary or narrow-range open/close signals. Action vectors are padded to a 32-dimensional space and then encoded with the 2048-token vocabulary of \molmoactfast. Proprioceptive state is represented separately: after normalization, each state value is uniformly discretized into one of 256 state tokens and appended to the prompt before the action target.
+
+\paragraph{Training.}
+We train for 200K steps with a maximum sequence length of 4200 tokens. Examples vary substantially in length: a text-only example may use only a few hundred tokens, while multi-camera robot examples must carry images, states, and action targets. We therefore use on-the-fly packing to combine multiple short examples into one 4200-token sequence. Packed examples share the same forward pass, but their text, visual tokens, state tokens, and action targets remain separated by the training attention mask, so the model does not condition one example on another. Appendix~\ref{supp:training} gives the implementation details for this packing procedure and the shared training stack. We train the vision encoder, connector, language model, and newly added tokens' embeddings with a global batch size of 128 across 64 H100 GPUs for around 5,760 GPU hours. The vision encoder and connector use a learning rate of \(5\times10^{-6}\), and the language model uses \(1\times10^{-5}\). This produces a discrete VLA checkpoint that can later be adapted to continuous control.

@@ -1,0 +1,266 @@
+\section{Model Details}
+\label{supp:model}
+
+This appendix expands the model description in Sec.~\ref{sec:pretraining} and
+Sec.~\ref{sec:posttraining}. \molmoactt is built in two architectural stages.
+First, \molmoacttpre adapts the \molmoer vision-language backbone into a
+discrete autoregressive robot policy. It keeps the Molmo2 visual and text token
+interface, but adds robot-specific state, setup/control, and action-output
+tokens so that robot trajectories can be trained with the same next-token
+objective as vision-language data. Second, post-training attaches a continuous
+DiT-style action expert to this already robot-aware backbone. The expert uses
+per-layer KV conditioning on the VLM and learns a flow-matching velocity field
+over continuous robot action chunks. \molmothink keeps the same architecture and
+adds an autoregressive depth-token prefix before action prediction.
+
+\subsection{\molmoactt Backbone}
+\label{supp:model-backbone}
+
+\paragraph{Backbone initialization and visual inputs.}
+\molmoactt initializes from \molmoer, a Molmo2-based VLM specialized for
+embodied and spatial reasoning. The backbone therefore follows the Molmo2
+architecture~\citep{clark2026molmo2openweightsdata}: visual inputs are encoded
+by a SigLIP2 vision transformer, pooled and projected by a vision-language
+connector, and consumed by an autoregressive language model together with text.
+The important MolmoAct2-specific choice is how this interface is used for robot
+control. Robot examples can include multiple camera views, proprioceptive state
+tokens, setup/control descriptors, and action targets, so sequence length is a
+central constraint. For the robot-policy stages in Sec.~\ref{sec:pretraining}
+and Sec.~\ref{sec:posttraining}, each camera observation is represented as a
+single resized crop rather than a tiled high-resolution image. Video examples
+are sampled at up to 2 FPS and capped to at most 8 frames. Multi-camera robot
+episodes are serialized as multiple image inputs, and the camera order is
+randomized at the episode level during pre-training.
+
+\paragraph{Vision encoder and connector.}
+Each crop is encoded by a SigLIP2 vision transformer~\citep{tschannen2025siglip}.
+The connector follows the Molmo2 design. It reads patch features from the
+third-to-last and ninth-from-last ViT layers, then pools local windows with a
+multi-head attention layer. For images, \(2\times2\) patch windows are pooled
+into one visual token using the mean patch feature as the query. For videos, a
+\(3\times3\) pooling window is used to further reduce the number of frame
+tokens. The pooled features are projected into the language-model embedding
+space with a shared MLP. This produces a sequence of visual tokens that can be
+interleaved with text tokens.
+
+\paragraph{Language model input.}
+The language model receives visual tokens together with the robot instruction
+and robot-specific text. Multi-camera observations are identified by image-index
+text, and video frames use the same frame markers as Molmo2. Since MolmoAct2
+robot observations use single resized crops, the model does not rely on the
+multi-crop column-token machinery for robot control. Visual tokens are allowed
+to forward-attend to one another, including across different frames or camera
+views, so the backbone can reason over the full visual context before producing
+state-conditioned robot outputs.
+
+\paragraph{Added tokens.}
+The robot interface keeps the model in the same autoregressive format as the
+base VLM by adding robot-specific tokens to the backbone vocabulary. A robot
+example contains visual observations, a language instruction, optional setup
+and control descriptors, discrete state tokens, and an output marker that tells
+the model which response type to produce. The main markers are
+\texttt{\detokenize{<setup_start>}}, \texttt{\detokenize{<setup_end>}},
+\texttt{\detokenize{<control_start>}}, \texttt{\detokenize{<control_end>}},
+\texttt{\detokenize{<state_start>}}, \texttt{\detokenize{<state_end>}}, and
+\texttt{\detokenize{<action_output>}}. We also add indexed token families for
+discrete robot quantities: action tokens
+\texttt{\detokenize{<action_0>}}--\texttt{\detokenize{<action_2047>}} and
+state tokens
+\texttt{\detokenize{<state_0>}}--\texttt{\detokenize{<state_255>}}. The
+depth tokens are added only for \molmothink post-training: the model uses
+\texttt{\detokenize{<depth_output>}}, \texttt{\detokenize{<depth_start>}}, and
+\texttt{\detokenize{<depth_end>}}, together with depth-code tokens
+\texttt{\detokenize{<depth_0>}}--\texttt{\detokenize{<depth_127>}}.
+
+Setup and control descriptors make embodiment and action semantics explicit in
+the prompt. For example, a bimanual YAM prompt can indicate that the robot is a
+pair of YAM arms and that the control target is an absolute joint pose, while a
+DROID prompt can indicate a Franka arm with delta end-effector control. This
+lets the same tokenizer and backbone support different robots without forcing
+all datasets into a single physical coordinate convention.
+
+Continuous robot states are normalized using dataset statistics and discretized
+into one of 256 state tokens per scalar dimension. The resulting state-token
+sequence is appended to the prompt before the action output marker. Continuous
+actions are normalized, padded to a maximum width of 32 dimensions, and encoded
+by \molmoactfast into discrete action tokens with a 2048-token action
+vocabulary. During pre-training, these action tokens are the only robot target.
+During post-training and fine-tuning, the same example also provides a
+continuous action chunk for the action expert. The discrete action-token span is
+masked from the expert conditioning path, so the continuous policy cannot
+condition on the ground-truth action tokens it is trained to predict.
+
+\input{tables/appendix/hyperparams_model}
+
+\subsection{Continuous Action Expert}
+\label{supp:model-action-expert}
+
+\paragraph{Input and output.}
+The action expert is a noncausal transformer over a short action chunk. It maps
+a noisy normalized trajectory
+\(x_t \in \mathbb{R}^{H \times D_{\max}}\) to a velocity prediction of the same
+shape, where \(H\) is the action horizon and \(D_{\max}=32\) is the shared
+maximum action width. The released \molmoactt checkpoint uses \(H=30\) for
+post-training, while the \libero fine-tuned checkpoints use \(H=10\). The
+corresponding padding masks remove padded action steps and padded action
+dimensions from both the noisy input and the loss.
+
+\paragraph{Flow-matching objective.}
+Let \(a\) be a normalized target action chunk and let
+\(\epsilon \sim \mathcal{N}(0,I)\). For a sampled time \(t \in [0,1]\), we
+construct
+\begin{equation}
+    x_t = (1-t)\epsilon + t a,
+    \qquad
+    u^\star = a - \epsilon .
+\end{equation}
+The action expert \(f_\theta\) predicts \(u^\star\) from the noisy trajectory,
+the time embedding, and the VLM context \(c\):
+\begin{equation}
+    \mathcal{L}_{\mathrm{flow}}
+    =
+    \mathbb{E}_{a,\epsilon,t}
+    \left[
+    \left\|
+    m \odot \left(f_\theta(x_t,t,c) - u^\star\right)
+    \right\|_2^2
+    \right],
+\end{equation}
+where \(m\) masks padded action steps and padded action dimensions. In
+post-training, we evaluate multiple sampled flow-matching times for each robot
+action chunk while reusing the same VLM context. At inference, we initialize
+the trajectory from Gaussian noise and integrate the learned velocity field for
+a fixed number of Euler steps:
+\begin{equation}
+    z_{i+1} = z_i + \Delta t \, f_\theta(z_i,t_i,c),
+    \qquad
+    t_i = \frac{i}{N},
+    \qquad
+    \Delta t = \frac{1}{N}.
+\end{equation}
+The released checkpoints use \(N=10\) inference steps. The final normalized
+trajectory is sliced to the embodiment-specific action width and unnormalized
+with the corresponding dataset statistics.
+
+\paragraph{Expert block.}
+The action expert has one transformer block for each VLM layer, giving
+\(L=36\) expert blocks. A noisy action chunk is first projected from 32
+continuous dimensions to the expert hidden width. Each block contains
+bidirectional self-attention over the action chunk, cross-attention to the VLM
+context, and an MLP. A sinusoidal time embedding is passed through a small MLP,
+then used to produce DiT-style shift, scale, and gate parameters for all three
+residual branches. Schematically, block \(\ell\) computes
+\begin{align}
+    h'_\ell
+        &= h_\ell
+        + g^{\mathrm{sa}}_\ell
+        \operatorname{SA}\!\left(
+        \operatorname{AdaRMS}^{\mathrm{sa}}_\ell(h_\ell,t)
+        \right), \\
+    \bar{h}_\ell
+        &= h'_\ell
+        + g^{\mathrm{ca}}_\ell
+        \operatorname{CA}\!\left(
+        \operatorname{AdaRMS}^{\mathrm{ca}}_\ell(h'_\ell,t),
+        \tilde{K}_\ell,
+        \tilde{V}_\ell
+        \right), \\
+    h_{\ell+1}
+        &= \bar{h}_\ell
+        + g^{\mathrm{ff}}_\ell
+        \operatorname{MLP}\!\left(
+        \operatorname{AdaRMS}^{\mathrm{ff}}_\ell(\bar{h}_\ell,t)
+        \right).
+\end{align}
+Here, \(\operatorname{AdaRMS}\) denotes RMS normalization followed by the
+time-dependent affine modulation. The self-attention and cross-attention layers
+use query-key normalization. The expert uses rotary position embeddings for the
+action sequence, which gives the denoising transformer an explicit ordering
+over the predicted trajectory steps. After the final expert block, a modulated
+RMS normalization layer and a linear projection map the hidden states back to
+32 action dimensions. The final projection is initialized to produce near-zero
+velocity predictions at the beginning of post-training, which makes the newly
+attached expert easier to optimize.
+
+\paragraph{Per-layer KV conditioning.}
+The action expert receives VLM context through per-layer KV conditioning. For
+VLM layer \(\ell\), let \((K^{\mathrm{vlm}}_\ell,V^{\mathrm{vlm}}_\ell)\) be
+the key and value tensors produced by that layer's self-attention over the
+prompt, images, state tokens, and non-target robot text. The expert uses learned
+adapter projections \(P_K\) and \(P_V\) to map these tensors into the expert
+cross-attention width:
+\begin{equation}
+    \tilde{K}_\ell =
+    \operatorname{reshape}\!\left(P_K K^{\mathrm{vlm}}_\ell\right),
+    \qquad
+    \tilde{V}_\ell =
+    \operatorname{reshape}\!\left(P_V V^{\mathrm{vlm}}_\ell\right).
+\end{equation}
+Expert block \(\ell\) then cross-attends to
+\((\tilde{K}_\ell,\tilde{V}_\ell)\):
+\begin{equation}
+    \operatorname{CA}(Q_\ell,\tilde{K}_\ell,\tilde{V}_\ell)
+    =
+    \operatorname{softmax}\!\left(
+        \frac{Q_\ell \tilde{K}_\ell^\top}{\sqrt{d_h}}
+    \right)\tilde{V}_\ell .
+\end{equation}
+This gives each expert block direct access to the attention state at the same
+depth in the VLM. In the released architecture, the VLM has 8 KV heads with
+head dimension 128, so each token contributes a 1024-dimensional key and value
+state. The adapter projections map this state to the action expert width of
+768, which is reshaped into 8 expert attention heads of width 96. In
+post-training, this conditioning path is detached from the VLM for the flow
+loss. The language-model loss still updates the VLM, while the flow loss trains
+the action expert and the VLM-to-expert adapter projections.
+
+\subsection{Adaptive-Depth Extension}
+\label{supp:model-depth}
+
+\molmothink keeps the same backbone and action expert, but adds an
+autoregressive depth-token interface before continuous action prediction. A
+depth response is requested with \texttt{\detokenize{<depth_output>}} and
+serialized between \texttt{\detokenize{<depth_start>}} and
+\texttt{\detokenize{<depth_end>}}. The released depth checkpoints predict a
+\(10\times10\) depth-token grid, giving 100 depth positions, and each position
+takes one of 128 learned depth-code values. For depth-only examples, the
+assistant response begins with
+\texttt{\detokenize{<depth_output>}} and the model predicts depth tokens. For
+depth-and-action examples, the response begins with
+\texttt{\detokenize{<depth_output><action_output>}}. The depth tokens are
+generated autoregressively, then included in the context used by the action
+expert.
+
+The \libero depth fine-tuned model also includes a learned depth gate on the
+expert conditioning path. For action-expert layer \(\ell\), let \(M_t=1\)
+denote positions belonging to the depth-output trigger, depth delimiters, or
+depth-code tokens, and let \(A_t\) denote valid context positions. The gate is
+computed from the non-depth context of the corresponding VLM layer,
+\begin{equation}
+    c_\ell
+    =
+    \frac{
+        \sum_t A_t(1-M_t)V^{\mathrm{vlm}}_{\ell,t}
+    }{
+        \sum_t A_t(1-M_t)
+    },
+    \qquad
+    g_\ell
+    =
+    \sigma(w_\ell^\top c_\ell + b_\ell),
+\end{equation}
+and then applied only to depth-token keys and values:
+\begin{equation}
+    \bar{K}^{\mathrm{vlm}}_{\ell,t}
+    =
+    \left(1-M_t+M_t g_\ell\right)K^{\mathrm{vlm}}_{\ell,t},
+    \qquad
+    \bar{V}^{\mathrm{vlm}}_{\ell,t}
+    =
+    \left(1-M_t+M_t g_\ell\right)V^{\mathrm{vlm}}_{\ell,t}.
+\end{equation}
+The gated \((\bar{K}^{\mathrm{vlm}}_{\ell},\bar{V}^{\mathrm{vlm}}_{\ell})\)
+are then projected into the action expert as in \autoref{sec:posttraining}.
+The gate is initialized with bias \(-4\), so fine-tuning begins close to the
+standard action-conditioning path and learns how strongly each expert layer
+should use the depth prefix.

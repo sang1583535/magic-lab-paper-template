@@ -1,0 +1,123 @@
+\section{\molmoer}
+\label{sec:er}
+
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.1}
+\caption{\textbf{\molmoactt multimodal web data training corpus (combining data from \molmot, \molmoer, and Tulu-3).} Sizes denote the number of samples used in our mixture (we subsample several datasets to balance the mixture). Sampling weights are the marginal proportion of each group within the non-robotics portion of the pretraining mixture.
+% \jc{do we explain `NLP' part of data somewhere?}
+}
+\label{tab:molmoact2-vqa-data}
+% \resizebox{\linewidth}{!}
+{
+\begin{tabular}{lcc!{\vrule}lcc}
+% \toprule
+% \multicolumn{3}{c!{\vrule}}{\textbf{\molmot Dataset Mixture}} & \multicolumn{3}{c}{\textbf{\molmoer Dataset Mixture}} \\
+% \toprule
+ & \textbf{\#Samples} & \textbf{Weight} &  & \textbf{\#Samples} & \textbf{Weight} \\
+\toprule
+\multicolumn{2}{l}{\textbf{\molmot Dataset}} & & \multicolumn{2}{l}{\textbf{\molmoer Dataset}} \\
+Image QA  & 2.4M  & 0.115 & Image Embodied QA  & 1.3M  & 0.11 \\
+% \midrule
+Video QA  & 2.4M  & 0.092 & Image Pointing  & 780K  & 0.11 \\
+% \midrule
+Image Pointing  & 1.1M  & 0.046 & Image Detection  & 100K  & 0.01 \\
+% \midrule
+Video Pointing  & 370K  & 0.069 & Video Embodied QA  & 703k  & 0.10 \\
+% \midrule
+Video Tracking  & 800K  & 0.069 & Multi-image/ Ego-Exo  & 700K  & 0.09 \\
+% \midrule
+Captions/Long QA  & 1.2M  & 0.069 & Abstract Reasoning  & 150K  & 0.04 \\
+% \midrule
+\textbf{Subtotal} & \textbf{8.3M} & \textbf{0.46} & \textbf{Subtotal} & \textbf{3.3M} & \textbf{0.46} \\
+\toprule
+% & &  \multicolumn{1}{c}{} & \textbf{Tulu-3 SFT Dataset} & \textbf{980k}  & \textbf{ 0.08} \\
+% \midrule
+% & &  \multicolumn{1}{c}{} &  & \textbf{Total} & $\approx$\textbf{12.51M} \\
+\textbf{Tulu-3 SFT Dataset} & \textbf{980k}  & \textbf{ 0.08} & \textbf{Total} & \textbf{12.5M} & \textbf{1.0} \\
+% \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+
+Existing VLM backbones are optimized for semantic image understanding rather than the metric, geometric, and temporally grounded reasoning required for robot control.
+We develop \molmoer as a strong VLM backbone for embodied reasoning (ER). 
+We finetune \molmot~\citep{clark2026molmo2openweightsdata} for specialized embodied perception skills that downstream action reasoning depends on, including scene understanding, pixel-accurate pointing, multi-image and egocentric reasoning, exocentric correspondence, and video temporal reasoning. 
+\molmoer outperforms every open-weight baseline as well as the strongest closed-source models, including Gemini Robot-ER 1.5 Thinking and GPT-5, on $9$ of $13$ established embodied reasoning benchmarks (\autoref{tab:er_results}), reaching an overall average of $63.8\%$ and improving over its \molmot starting point by $17$ points. The remainder of this section describes the new training data we introduce for \molmoer (summarized in \autoref{tab:molmoact2-vqa-data}) and the two-stage training recipe used to inject these skills.
+
+\subsection{Training data}
+\label{sec:molmoer-data}
+
+On top of \molmot's original multimodal pre- and mid-training data~\citep{clark2026molmo2openweightsdata}, we curate a new embodied reasoning corpus of approximately $3.3$M samples spanning six complementary capability pillars: single-image embodied QA, image pointing, image detection, video embodied QA, multi-image and ego--exo reasoning, and abstract embodied reasoning. Each pillar is covered by two or three datasets with diverse supervision sources (simulator ground truth, 3D-annotated real scans, template-generated QA, and a small amount of LLM-generated chain-of-thought), so that the model is exposed to a wide distribution of spatial reasoning phenomena rather than over-fitting to a single template style. The composition of this corpus is summarized in \autoref{tab:molmoact2-vqa-data}; we briefly describe each constituent below.
+
+\paragraph{Image embodied QA.}
+We assemble a mixture of image QA sources chosen to cover complementary axes
+of spatial competence rather than to maximize any single one.
+SAT~\citep{ray2025satdynamicspatialaptitude} supplies simulator-grounded
+supervision for \emph{dynamic} reasoning (egocentric motion, perspective
+taking, action consequences) that is hard to harvest from static web data.
+RoboPoint-QA~\citep{yuan2024robopoint} contributes general VQA breadth to
+guard against forgetting base perception during spatial fine-tuning.
+RefSpatial~\citep{zhou2025roborefer} bridges web
+images, real indoor scans, and procedural simulation, and is our main source
+of chain-of-thought referring---the bridge from spatial language to
+the pointing actions used downstream; we draw 250K multiple choice questions, 250K Chian-of-thought, and 80K
+pointing examples. VST-P~\citep{yang2025visualspatialtuning} normalizes
+inputs onto a uniform virtual camera, giving metric-consistent depth,
+distance, direction, and size supervision (200K single-image + 200K
+cross-view). VSI-590K~\citep{yang2025cambriansspatialsupersensingvideo}
+extends coverage to in-the-wild robotics and tour footage via 3D-grounded
+label propagation (200K images and 300K videos). Together these span static/dynamic, synthetic/real, and single-/multi-view regimes.
+
+\paragraph{Video embodied QA.}
+To extend reasoning across time we pair two complementary sources.
+SIMS-VSI~\citep{brown2025simsvsimulatedinstructiontuningspatial} gives clean
+simulator labels for distance, direction, count, and temporal-order
+questions over agent trajectories (203K). RoboVQA~\citep{sermanet2023robovqamultimodallonghorizonreasoning}
+covers the other end of the distribution: human-annotated long-horizon
+embodied video targeting planning, affordance, and future prediction---i.e.
+the question types that map most directly onto policy
+behavior; we use a 200K subset.
+
+
+\paragraph{Pointing and object detection.}
+Pointing is our primary action interface, so we deliberately oversample
+pixel-accurate localization. Beyond RefSpatial's pointing split, we use the
+full RoboPoint procedural pointing corpus (700K normalized $(x,y)$ targets
+for object reference and free-space selection) together with its 100K
+LVIS-sourced detection split~\citep{yuan2024robopoint}, which ground spatial
+language directly in the coordinate format the policy
+consumes.
+
+
+\paragraph{Multi-image and ego\textendash exo correspondence.}
+Embodied policies routinely reconcile multiple camera views and switch
+between first- and third-person frames, an ability under-served by
+single-image corpora. We therefore include SenseNova-SI~\citep{cai2026scalingspatialintelligencemultimodal}
+(500K subset), whose distinguishing emphasis is multi-image and
+egocentric--exocentric correspondence~\citep{grauman2024egoexo4dunderstandingskilledhuman},
+together with the 200K cross-view split of VST-P.
+
+\paragraph{Abstract embodied reasoning.}
+Finally, we add two synthetic diagnostics to harden compositional reasoning
+in a low-bias setting. CLEVR~\citep{johnson2016clevrdiagnosticdatasetcompositional}
+(50K) targets compositional attribute--relation reasoning. GRiD-3D~\citep{lee_grid3d_2022}
+(100K) specifically isolates \emph{object-intrinsic} relative direction
+(front/left of a referent's own frame, not the camera's)---a
+frame-of-reference distinction that matters for instruction following but is
+rarely labeled in natural data.
+
+\subsection{Specialize-then-rehearse training recipe}
+\label{sec:molmoer-training}
+
+To avoid the redundant compute of re-running \molmot's full multimodal training with our new corpus integrated, we build on the released \molmot checkpoint with a two-stage \emph{specialize-then-rehearse} recipe.
+
+\paragraph{Stage 1: Embodied specialization.}
+Starting from the \molmot--4B mid-training checkpoint~\citep{deitke2024molmo,qwen3}, we fine-tune for $20$K steps on the \molmoer corpus augmented with $8\%$ Tulu-3~\citep{lambert2025tulu3pushingfrontiers} text-only data to preserve language competence, using sequence length $4{,}200$ and a global batch size of $64$ (device batch size $4$ across $2$ nodes $\times$ $8$ H100 GPUs). This stage rapidly moves the model onto the embodied data manifold: pointing accuracy, video embodied QA, and multi-image reasoning all improve sharply.
+
+\paragraph{Stage 2: Joint refinement.}
+We continue training the Stage~1 checkpoint for $1.5$K additional steps on a mixture that interleaves our embodied corpus with \molmot's original multimodal mid-training data (general VQA, captioning, academic benchmarks, tracking, and \molmot pointing). Holding the NLP rate at $8\%$, the remaining $92\%$ budget is split as $p \cdot 0.92$ embodied and $(1-p) \cdot 0.92$ general, with each side's internal proportions preserved. Sweeping $p \in \{0.30, 0.50, 0.70, 0.90\}$, we find $p = 0.5$ yields the best Pareto trade-off between the embodied-reasoning benchmarks in \autoref{tab:er_results} and \molmot's general benchmarks. To accommodate the long multi-image and long-video examples in the general mixture, Stage~2 uses a longer sequence length ($16{,}384$ vs.~$4{,}200$ in Stage~1) with per-device batch size reduced to $1$; all other hyperparameters follow \molmot.

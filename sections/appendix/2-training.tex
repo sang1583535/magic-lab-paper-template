@@ -1,0 +1,192 @@
+\section{Training Details}
+\label{supp:training}
+
+\subsection{Implementation}
+\paragraph{Training infrastructure.}
+Our training implementation mainly follows Molmo2. We train in PyTorch with
+Fully Sharded Data Parallel v2 (FSDP2), and use PyTorch's scaled dot-product
+attention implementation rather than FlashAttention because our packed
+multimodal sequences and robot-conditioning masks require custom attention
+masks. We use \texttt{torch.compile} for throughput and keep the ViT and LLM
+shapes static through padding and fixed sequence budgets, which allows the
+compiled graph to be reused efficiently across training steps.
+
+We use automatic mixed precision with \texttt{bfloat16} for most operations,
+while keeping numerically sensitive operations such as layer normalization and
+RoPE in full precision. Gradients are computed on local minibatches and then
+averaged across devices. For token-level losses, each device divides by the
+average number of loss tokens across all devices rather than by its local
+number of loss tokens. This avoids over-weighting examples with short target
+spans, which is important because our mixtures contain both short robot-action
+targets and longer language or video examples. During fine-tuning, dataset
+mixing is performed within each batch so that each update contains examples
+from multiple sources. Examples longer than the stage-specific maximum
+sequence length are truncated; this affects fewer than 0.1\% of examples and
+usually occurs for long video examples with subtitles or dense annotations. We
+find training stable under this setup, without loss spikes or NaNs.
+
+\paragraph{Packing.}
+Our packing implementation also follows Molmo2. Each data-loader worker keeps
+a pool of \(M=48\) preprocessed and tokenized examples. When the pool is not
+full, new examples are drawn from the training mixture and added to the pool.
+Once the pool is full, a dynamic-programming solver selects the subset that
+maximizes
+\begin{equation}
+    T + w_i I
+    \quad\text{subject to}\quad
+    T \leq T_{\max},\ I \leq I_{\max},
+\end{equation}
+where \(T\) is the total number of text tokens, \(I\) is the total number of
+image crops, and \(w_i=30\) balances token and image utilization. The selected
+examples are yielded as one packed sequence and removed from the pool. In the
+Molmo2 setting, \(T_{\max}=16384\) and \(I_{\max}=128\), while long-context
+training uses \(T_{\max}=36864\) and \(I_{\max}=384\). For \molmoactt, the
+same solver is used with the stage-specific sequence budgets described in
+\autoref{sec:pretraining-recipe} and \autoref{sec:posttraining-recipe}. In
+practice, we solve a quantized version of the packing problem by rounding token
+counts to the nearest multiple of 32.
+
+Increasing the pool beyond 48 examples gives diminishing returns in packing
+efficiency. The method is also generally robust to \(w_i\), although values
+that are too small can leave the pool dominated by examples with many image
+crops, which are difficult to pack with other examples. Implementing packing
+inside PyTorch's \texttt{DataLoader} makes it easy to use, since each worker
+runs the algorithm independently. This adds some overhead when many workers are
+used, but in practice data loading is still dominated by video decoding and
+frame extraction.
+
+\paragraph{Image augmentation.}
+We use the same image augmentation scheme in all of our robot pre-training, post-training, and fine-tuning runs. The image augmentation is applied to all images and videos during training, not limited to robot data. Augmentation is
+disabled for evaluation and inference.
+
+The image augmentation applies the stochastic transforms before image
+normalization and final resizing. In simplified form, the recipe is:
+
+\begin{center}
+\begin{minipage}{0.78\linewidth}
+\begin{lstlisting}[language=Python,basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,framerule=0.4pt]
+import torchvision.transforms as T
+
+height, width = image.height, image.width
+
+transform = T.Compose([
+    T.RandomCrop(size=(int(height * 0.95), int(width * 0.95))),
+    T.Resize((height, width)),
+    T.RandomRotation(degrees=5),
+    T.ColorJitter(
+        brightness=0.2,
+        contrast=(0.8, 1.2),
+        saturation=(0.8, 1.2),
+        hue=0.05,
+    ),
+    T.RandomApply(
+        [T.GaussianBlur(kernel_size=5, sigma=(0.1, 1.0))],
+        p=0.2,
+    ),
+])
+
+image = transform(image)
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\paragraph{Input prompts.}
+Robot examples are formatted with one of three output styles. Standard
+\molmoactt uses the action style, which asks the model to predict the robot
+action for the given instruction, setup, state, and control mode.
+\molmothink uses all three styles: action prediction, depth prediction, and
+depth-then-action prediction. The depth-only style asks for the depth map of
+the main image. The depth-then-action style asks the model to first produce the
+depth representation and then produce the action, so that the continuous action
+expert can condition on the input context together with the predicted depth
+tokens.
+
+After constructing the natural-language prompt, we wrap it with the same
+user/assistant chat template used by the Molmo2 formatter. For robot runs, the
+user message is placed between \texttt{\detokenize{<|im_start|>user}} and
+\texttt{\detokenize{<|im_end|>}}, followed by the assistant prefix
+\texttt{\detokenize{<|im_start|>assistant}}. We then append an output trigger
+on the assistant side: action examples use
+\texttt{\detokenize{<action_output>}}, depth examples use
+\texttt{\detokenize{<depth_output>}}, and depth-then-action examples use
+\texttt{\detokenize{<depth_output><action_output>}}. During training, the
+target response follows this trigger. During inference, we provide the same
+formatted user message, assistant prefix, and trigger as the generation prefix,
+which selects the desired output style before autoregressive decoding or
+continuous action generation begins.
+
+Before insertion into the prompt, raw task strings are normalized into concise
+natural-language task descriptions. Dataset-specific bookkeeping is removed,
+punctuation and whitespace are standardized, and embodiment or control
+information is placed into the separate setup and control fields rather than
+being duplicated in the task text. The setup and control fields can also be
+wrapped with dedicated special tokens, while the robot state is included as an
+optional state clause when discrete state tokens are available. Representative
+formatted prompt prefixes are:
+
+\begin{center}
+\begin{minipage}{0.88\linewidth}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,framerule=0.4pt]
+Action:
+<|im_start|>user
+The task is to put the red mug on the tray. The setup is <setup_start>bimanual yam robotic arms in molmoact2<setup_end>. The current state of the robot is <state_start><state_14><state_87>...<state_203><state_end>. The expected control mode is <control_start>absolute joint pose<control_end>. Given these, what action should the robot take to complete the task?
+<|im_end|>
+<|im_start|>assistant
+<action_output>
+
+Depth:
+<|im_start|>user
+The task is to open the middle drawer. The setup is <setup_start>single franka robotic arm in libero<setup_end>. The expected control mode is <control_start>delta end-effector pose<control_end>. Given these, what is the depth map of the main image?
+<|im_end|>
+<|im_start|>assistant
+<depth_output>
+
+Depth then action:
+<|im_start|>user
+The task is to place the bowl next to the plate. The setup is <setup_start>single franka robotic arm in libero<setup_end>. The current state of the robot is <state_start><state_31><state_52>...<state_118><state_end>. The expected control mode is <control_start>delta end-effector pose<control_end>. Given these, first predict the depth map of the main image and then predict the action the robot should take to complete the task?
+<|im_end|>
+<|im_start|>assistant
+<depth_output><action_output>
+\end{lstlisting}
+\end{minipage}
+\end{center}
+
+\paragraph{Training hyperparameters.}
+We summarize the stage-level training hyperparameters in
+\autoref{tab:hyperparams_train}. The columns correspond to the three training
+stages used throughout the paper: pre-training, post-training, and
+embodiment-specific fine-tuning.
+
+\input{tables/appendix/hyperparams_training}
+
+
+\subsection{\molmoactfast}
+The \molmoactfast architecture is an open-data implementation based on the FAST framework released by Physical Intelligence \citep{pertsch2025fast}. While we utilize the core logic of frequency-domain compression (DCT-BPE), \molmoactfast is distinguished by its use of a fully transparent training mix addressing the data opacity of prior open-weight releases.
+
+\paragraph{Data Format}
+We adopt a standardized 32-dimensional vector format to accommodate various robot morphologies. The vector is structured as follows: Single-Arm: $[A_1, \dots, A_n, G_1, 0, \dots, 0]$ where $A$ represents $n$ arm joints and $G_1$ is the gripper state. Bimanual: $[A_{L1}, \dots, A_{Ln}, G_L, A_{R1}, \dots, A_{Rn}, G_R, 0, \dots, 0]$ representing Left and Right arms respectively.
+
+\paragraph{Multimodal Representation }: \molmoactfast does not require a unified coordinate frame (e.g., converting all data to Delta End-Effector). Instead, the tokenizer is trained on a heterogeneous mix of "dialects," including Absolute Joint positions and Delta End-Effector velocities. During training, the VLM backbone learns to associate these disparate action representations with the specific embodiment mentioned in the task prompt or visual context.
+
+
+\subsection{GPU Cluster}
+% \molmoactt is trained on Jupiter, an Ai2 cluster. Beaker, Ai2's workload management system, allows researchers to migrate workloads from one cluster to another. Jupiter is a 128-node GPU cluster located in Austin, Texas. 
+% It is operated by Cirrascale Cloud Services\footnote{\href{https://www.cirrascale.com/}{\path{cirrascale.com}}}.
+
+% \paragraph{Compute} It consists of 1,024 NVIDIA H100 GPUs, each with 80GB HBM3 running at 700W. The GPUs are spread across 128 servers with 2x Intel Xeon Platinum 8468 CPUs, 2 TB of DDR5 system memory, and 18 TB of local NVMe storage.
+
+% \paragraph{Storage} The servers are connected via a 800 Gbps local network to a WEKA high performance storage cluster\footnote{\href{https://www.weka.io/}{\path{weka.io}}}. This cluster has 1 PB of NVMe SSD storage with 11 physical servers, and 5 PB of HDD storage spread across 12 hosts. The Jupiter GPU servers have two bonded 25 Gbps Mellanox ethernet cards each, providing a total of 50 Gbps of throughput per host. In benchmarks, we reach 761 Gbps of read/write throughput using 64 client machines. 
+
+% \paragraph{Interconnect} Cross-node GPU communication is provided via RDMA over InfiniBand and a 2-Tier Rail Optimized \citep{wang2023rail}, balanced, full-bisected network. Each physical server has eight 400 Gbps InfiniBand cards, providing a maximum total throughput per host of 3200 Gbps. This setup allows Ai2 to run dozens of distributed training workloads simultaneously on the same cluster without topological scheduling.
+
+% \paragraph{Cooling} The Jupiter servers are racked in \textit{Dynamic Density Cabinets}\footnote{\href{https://www.cirrascale.com/products-and-services/cabinet-technologies}{\path{cirrascale.com/products-and-services/cabinet-technologies}}}. Each cabinet includes 5 servers with dedicated cooling and power. Each cabinet is a closed system, circulating air through an overhead compartment where it is cooled via heat transfer to water. This approach allows the datacenter to achieve a power usage efficiency (PUE) of 1.2. Under heavy utilization, our H100 GPUs reach a peak temperature of 75°C; average GPU temperatures are between 60°C and 65°C.
+
+\molmoactt was trained on Jupiter, an Ai2 GPU cluster in Austin, Texas. \molmoactt workloads were scheduled using Beaker \citep{guerquin2022beaker}, a custom workload management system. Jupiter comprises 128 GPU nodes and is operated by Cirrascale Cloud Services\footnote{\href{https://www.cirrascale.com/}{\path{cirrascale.com}}}.
+
+\paragraph{Compute} Jupiter provides 1{,}024 NVIDIA H100 GPUs (80GB HBM3, 700W) across 128 servers. Each server has 2,$\times$,Intel Xeon Platinum8468 CPUs, 2TB DDR5 system memory, and 18~TB local NVMe storage.
+
+\paragraph{Storage} The servers are connected over an 800Gbps local network to a WEKA high-performance storage cluster\footnote{\href{https://www.weka.io/}{\path{weka.io}}}. The storage system provides 1PB of NVMe SSD across 11 storage servers and 5PB of HDD across 12 hosts. Each Jupiter server has two bonded 25Gbps Mellanox Ethernet NICs (50Gbps per host). In benchmarks, we achieved 761Gbps aggregate read/write throughput using 64 client machines.
+
+\paragraph{Interconnect} Cross-node GPU communication uses RDMA over InfiniBand on a two-tier Rail-Optimized, balanced, full-bisection network \citep{wang2023rail}. Each server is equipped with eight 400Gbps InfiniBand adapters (3.2Tbps peak per host), supporting concurrent distributed jobs without topological scheduling.
+
+\paragraph{Cooling} The servers are racked in \textit{Dynamic Density Cabinets}\footnote{\href{https://www.cirrascale.com/products-and-services/cabinet-technologies}{\path{cirrascale.com/products-and-services/cabinet-technologies}}}. Each cabinet houses five servers with dedicated cooling and power. Air circulates in a closed loop through an overhead plenum where it is cooled via heat transfer to water, enabling a datacenter PUE of~1.2. Under heavy utilization, H100 temperatures peak around $75^\circ\mathrm{C}$, with typical averages between $60^\circ\mathrm{C}$ and $65^\circ\mathrm{C}$.
