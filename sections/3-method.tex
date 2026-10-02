@@ -1,0 +1,18 @@
+\section{Method}
+\label{sec:method}
+
+Start with a short overview of \method and point to a method figure, then describe each component in its own subsection.
+
+\subsection{Problem Formulation}
+\label{sec:problem}
+
+Define the notation before you use it. For example, a policy $\pi_\theta$ maps an observation $o_t$ and a language instruction $\ell$ to an action chunk $\mathbf{a}_{t:t+H}$:
+\begin{equation}
+    \mathbf{a}_{t:t+H} \sim \pi_\theta(\cdot \mid o_t, \ell).
+    \label{eq:policy}
+\end{equation}
+Number only the equations you refer to later, and refer to them with \verb|\cref|, e.g.\ \cref{eq:policy}.
+
+\subsection{Cross-references}
+
+Label every section, figure, table, and equation (\verb|\label{sec:...}|, \verb|fig:|, \verb|tab:|, \verb|eq:|) and refer to them with \verb|\cref|, which adds the right name automatically: \cref{sec:intro}, \cref{fig:teaser}, \cref{tab:main}. Use \verb|\Cref| at the start of a sentence.

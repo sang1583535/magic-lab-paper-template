@@ -1,0 +1,37 @@
+\section{Experiments}
+\label{sec:experiments}
+
+Open with the questions your experiments answer, for example:
+(1) Does \method outperform prior methods? (2) Does it generalize to unseen objects and scenes? (3) Which components matter most?
+Then answer each question in its own subsection.
+
+\subsection{Setup}
+Describe the benchmarks, robot platforms, baselines, metrics, and the number of trials per task, so that results can be reproduced. Put full details (hyperparameters, task lists) in the appendix.
+
+\subsection{Main Results}
+
+\input{tables/main_results}
+
+\Cref{tab:main} shows an example table. Use \texttt{booktabs} rules (\verb|\toprule|, \verb|\midrule|, \verb|\bottomrule|) and no vertical lines, put the caption above the table, bold the best result, and shade your own row (see \texttt{tables/main\_results.tex}). Report the number of trials or a confidence interval with every success rate.
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{example-image-b}
+        \caption{First panel.}
+        \label{fig:panel_a}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{example-image-c}
+        \caption{Second panel.}
+        \label{fig:panel_b}
+    \end{subfigure}
+    \caption{\textbf{A figure with sub-figures.} Use the \texttt{subcaption} package for multi-panel figures, and save plots as vector PDFs so that they stay sharp.}
+    \label{fig:panels}
+\end{figure}
+
+\subsection{Ablations}
+Remove or replace one component of \method at a time and report the effect, as in \cref{fig:panels}. Explain \emph{why} each result happens, not just what the numbers are.
