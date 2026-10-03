@@ -42,7 +42,7 @@
 \RequirePackage{xcolor}
 \RequirePackage[most]{tcolorbox}
 \definecolor{magicnavy}{HTML}{153455}  % titles and headings
-\definecolor{magicblue}{HTML}{2B5F91}  % accents
+\definecolor{magicblue}{HTML}{0088FF}  % accents
 \definecolor{magiclink}{HTML}{1F5A93}  % links and citations
 \definecolor{magictext}{HTML}{233143}  % body text
 \definecolor{magicmuted}{HTML}{5A697A} % secondary text
@@ -149,10 +149,6 @@
   \setlength{\parskip}{0cm}%
   \setlength{\parindent}{0cm}%
   \nohyphens
-  \ifmagic@logo
-    {\hfill\includegraphics[height=0.6cm]{magicstyle/assets/magic-logo.png}\par}%
-    \vskip 0.3cm
-  \fi
   {\setstretch{1.618}\titlelist\par}%
   \vskip 0.5cm
   \authorlist\par
@@ -163,9 +159,16 @@
   \vskip 0.5cm
   \begin{tcolorbox}[enhanced, frame hidden, colback=magicmist, arc=3.5pt,
       left=0.5cm, right=0.5cm, top=0.5cm, bottom=0.5cm, before skip=0pt,
-      grow to left by=1.5pt, grow to right by=1.5pt]
+      grow to left by=1.5pt, grow to right by=1.5pt,
+      overlay={%
+        \ifmagic@logo
+          \node[anchor=north east, at=(frame.north east),
+            xshift=-0.5cm, yshift=-0.45cm]
+            {\includegraphics[width=3cm]{magicstyle/assets/magic-logo.png}};
+        \fi
+      }]
     {\Large\sffamily\bfseries\color{magicnavy} Abstract\par}
-    \vspace{0.3cm}
+    \vspace{0.5cm}
     \abstractlist\par
   \end{tcolorbox}
   \FloatBarrier
